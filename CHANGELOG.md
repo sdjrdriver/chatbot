@@ -2,6 +2,109 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-05-22
+
+### Major Features Added
+
+#### Multiple Conversation Sessions
+- **Tabbed Interface**: Manage unlimited chat sessions with intuitive tab system
+- **Session Persistence**: All sessions automatically saved and restored
+- **Session Management**: Create, close, rename, and switch between sessions
+- **Individual Session History**: Each session maintains its own complete message history
+
+#### Advanced AI Parameter Controls
+- **Temperature Slider**: Adjust response creativity (0.0 - 2.0)
+- **Max Tokens Control**: Set response length limits (50 - 4000 tokens)
+- **Top P Parameter**: Fine-tune response diversity (0.0 - 1.0)
+- **Real-time Settings**: All parameters apply immediately to next response
+- **Persistent Settings**: Advanced controls saved across sessions
+
+#### Powerful Message Search
+- **Live Search**: Real-time search across all messages
+- **Cross-Session Search**: Find content across all conversation sessions
+- **Search Results Panel**: Click results to navigate directly to messages
+- **Message Highlighting**: Visual highlighting of search matches
+- **Content Preview**: See message previews in search results
+
+#### Conversation Branching
+- **Branch Creation**: Create alternative conversation paths from any AI response
+- **Context Preservation**: New branches maintain conversation history up to branch point
+- **Experiment Safely**: Try different approaches without losing original conversation
+- **Smart Branching**: Automatically continues conversation in new branch
+
+### Enhanced User Experience
+
+#### Expanded Keyboard Shortcuts
+- `Ctrl+T`: Create new conversation session
+- `Ctrl+F`: Toggle message search functionality
+- Enhanced tooltip showing all available shortcuts
+
+#### Improved Interface Design
+- **Larger Chat Container**: Increased from 600px to 700px height
+- **Optimized Layout**: Better space utilization for new features
+- **Responsive Session Tabs**: Horizontal scrolling for many sessions
+- **Enhanced Visual Hierarchy**: Clearer organization of controls
+
+#### Better Control Organization
+- **Grouped Controls**: Logical grouping of related functionality
+- **Collapsible Panels**: Advanced controls and search can be hidden
+- **Visual Indicators**: Clear feedback for active states and interactions
+
+### Technical Improvements
+
+#### Modular Architecture
+- **Separated Files**: Split single HTML into index.html, style.css, script.js
+- **Better Maintainability**: Cleaner code organization and development workflow
+- **Performance Benefits**: Browser caching and parallel file loading
+- **Development Benefits**: Easier debugging and collaboration
+
+#### State Management
+- **Session Storage**: Robust session management with localStorage
+- **Data Persistence**: All user data automatically saved and restored
+- **Performance Optimization**: Efficient rendering of multiple sessions
+- **Memory Management**: Smart cleanup of inactive session data
+
+#### API Integration
+- **Advanced Parameters**: Full integration with Ollama's parameter system
+- **Enhanced Error Handling**: Better error messages and recovery
+- **Request Optimization**: Improved API call efficiency
+
+#### Code Architecture
+- **Modular Design**: Cleaner separation of concerns
+- **Event Handling**: Improved event management system
+- **Global State**: Better global state management for cross-component communication
+
+### UI/UX Improvements
+
+#### Visual Enhancements
+- **Session Tab Design**: Professional tab interface with close buttons
+- **Search Interface**: Elegant search panel with results display
+- **Advanced Controls**: Intuitive slider controls with real-time values
+- **Branch Button**: Clear visual indication for branching capability
+
+#### Interaction Improvements
+- **Double-click Rename**: Intuitive session renaming
+- **Hover States**: Enhanced hover effects throughout interface
+- **Loading States**: Better visual feedback during operations
+- **Responsive Design**: Improved mobile and tablet experience
+
+### Export Enhancements
+- **Session Metadata**: Export includes session name and creation info
+- **Advanced Settings**: Export includes all AI parameter settings
+- **Enhanced Filename**: More descriptive export filenames with session names
+
+### Technical Specifications
+- **Session Management**: Unlimited concurrent sessions
+- **Search Performance**: Optimized for large conversation histories
+- **Storage Efficiency**: Compressed data storage for better performance
+- **Browser Compatibility**: Enhanced support for all modern browsers
+
+### Development Improvements
+- **File Structure**: Clean separation of HTML, CSS, and JavaScript
+- **Maintainability**: Easier to modify and extend individual components
+- **Version Control**: Better Git diffs and collaboration workflow
+- **Build Ready**: Prepared for future build tools and optimization
+
 ## [1.3.0] - 2025-05-22
 
 ### Added
