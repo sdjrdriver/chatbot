@@ -10,6 +10,11 @@ A modern web interface for interacting with Ollama AI models.
 - Typing indicators
 - Message animations
 
+## Theme Support
+- Light/Dark mode toggle
+- Persistent theme preference
+- Smooth theme transitions
+
 ## Setup
 1. Ensure Ollama is running and accessible
 2. Configure CORS: `Environment="OLLAMA_ORIGINS=*"`

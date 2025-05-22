@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-05-22
+
+### Added
+- Dark mode theme with toggle button
+- Theme persistence using localStorage
+- Smooth transitions between themes
+- Eye-friendly dark color scheme
+
 ## [1.0.0] - 2025-05-22
 
 ### Added
