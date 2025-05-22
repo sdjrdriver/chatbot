@@ -2,6 +2,148 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-05-22
+
+### Major Release: File Integration & Intelligence
+
+This release transforms the chatbot into a comprehensive AI workspace with file integration, conversation intelligence, and professional export capabilities.
+
+#### File Integration & Analysis
+- **Document Upload System**: Upload and manage multiple files per session
+  - Support for text files, PDFs, JSON, CSV, Markdown, logs, and more
+  - Drag-and-drop interface with file size and type detection
+  - Client-side file processing and content extraction
+- **Context Integration**: Seamlessly use uploaded files as conversation context
+  - One-click context insertion from file content
+  - Automatic text extraction from supported file types
+  - Smart content preview and truncation
+- **File Management Panel**: Comprehensive file organization
+  - File list with name, size, and upload date
+  - Quick actions: use in context, remove, preview
+  - Per-session file storage and management
+- **File Analytics**: Track file usage and impact on conversations
+
+#### Conversation Intelligence
+- **Real-time Analytics Dashboard**: Comprehensive conversation insights
+  - Message counts (total, user, AI responses)
+  - Word and estimated token counts
+  - Reading time estimation and session duration
+  - Top conversation topics extraction
+- **Performance Metrics**: Track AI interaction performance
+  - Response time monitoring and averages
+  - Response length analysis
+  - Model performance comparison data
+- **Auto-Summarization**: AI-powered conversation summaries
+  - Generate concise summaries of long conversations
+  - One-click summary generation using current model
+  - Export summaries with analytics data
+- **Topic Analysis**: Automatic conversation theme extraction
+  - Real-time topic identification from conversation content
+  - Topic frequency analysis and trending
+
+#### Enhanced Export System
+- **Multiple Export Formats**: Professional export options
+  - **JSON**: Complete data with full metadata and analytics
+  - **Markdown**: Clean, formatted text with headers and structure
+  - **HTML**: Professional web page format with styling
+  - **Plain Text**: Simple, readable conversation format
+- **Rich Export Data**: Comprehensive conversation preservation
+  - Full message history with timestamps
+  - Analytics data and performance metrics
+  - File metadata and usage information
+  - AI model settings and system prompts
+- **Batch Export**: Export all sessions simultaneously
+  - Single file containing all conversations
+  - Global analytics across all sessions
+  - Professional report generation
+- **Export Modal**: Intuitive export interface
+
+#### Conversation Templates
+- **Pre-built Template Library**: Ready-to-use conversation starters
+  - **Brainstorming Session**: Creative idea generation
+  - **Interview Practice**: Job interview preparation
+  - **Code Debugging**: Technical problem solving
+  - **Learning Assistant**: Educational conversations
+  - **Writing Helper**: Content creation and editing
+- **Custom Template Creation**: Build personalized templates
+  - Custom system prompts and starter messages
+  - Template naming and organization
+  - Persistent storage and reuse
+- **Template Management**: Organize and maintain templates
+
+#### Advanced Features
+- **Response Comparison**: Compare AI responses across models
+  - Multi-model response generation for same prompt
+  - Side-by-side comparison display
+  - Performance comparison metrics
+- **Enhanced Search**: Improved cross-session search capabilities
+  - Search results show session context and timestamps
+  - Better result previews and navigation
+  - Session-aware search result display
+- **System Message Type**: Better UX with system notifications
+  - Distinct styling for system messages
+  - File upload confirmations and status updates
+  - Template loading notifications
+
+### Enhanced User Experience
+
+#### Expanded Keyboard Shortcuts
+- `Ctrl+U`: Upload files (new)
+- `Ctrl+I`: Toggle analytics panel (new)
+- All existing shortcuts enhanced with new features
+
+#### Improved Interface Design
+- **File Management Panel**: Dedicated file upload and management interface
+- **Analytics Dashboard**: Professional analytics display with cards and metrics
+- **Template Gallery**: Visual template selection interface
+- **Export Modal**: Professional export dialog with format options
+- **Enhanced Session Tabs**: Better visual indicators and management
+
+#### Better Data Organization
+- **Persistent File Storage**: Files saved with sessions across browser restarts
+- **Analytics Persistence**: Conversation metrics tracked and saved
+- **Template Storage**: Custom templates saved and synchronized
+- **Enhanced Session Data**: Richer session metadata and history
+
+### Technical Improvements
+
+#### File Processing Architecture
+- **Client-side Processing**: All file operations performed locally
+- **Format Detection**: Smart file type recognition and handling
+- **Content Extraction**: Text extraction from various file formats
+- **Memory Management**: Efficient handling of large files
+- **Error Handling**: Robust file upload and processing error management
+
+#### Analytics Engine
+- **Real-time Calculations**: Live analytics updates during conversations
+- **Performance Tracking**: Response time and quality metrics
+- **Data Visualization**: Professional analytics display
+- **Export Integration**: Analytics included in all export formats
+
+#### Export System Architecture
+- **Multi-format Support**: Unified export system for all formats
+- **Template Engine**: Professional formatting for each export type
+- **Batch Processing**: Efficient handling of multi-session exports
+- **Metadata Preservation**: Complete data integrity in exports
+
+#### State Management Enhancements
+- **File State**: Persistent file storage and management
+- **Analytics State**: Real-time analytics calculation and storage
+- **Template State**: Custom template storage and synchronization
+- **Enhanced Session State**: Richer session data and metadata
+
+### Performance Improvements
+- **Efficient File Handling**: Optimized file processing and storage
+- **Analytics Caching**: Smart caching of calculated metrics
+- **Memory Management**: Better handling of large conversations and files
+- **Export Optimization**: Faster export generation for large datasets
+
+### Development Improvements
+- **Modular Architecture**: Enhanced separation of concerns
+- **Error Handling**: Comprehensive error management throughout
+- **Code Organization**: Better structure for new features
+- **Documentation**: Enhanced inline documentation and comments
+
 ## [1.4.0] - 2025-05-22
 
 ### Major Features Added
@@ -45,11 +187,6 @@ All notable changes to this project will be documented in this file.
 - **Responsive Session Tabs**: Horizontal scrolling for many sessions
 - **Enhanced Visual Hierarchy**: Clearer organization of controls
 
-#### Better Control Organization
-- **Grouped Controls**: Logical grouping of related functionality
-- **Collapsible Panels**: Advanced controls and search can be hidden
-- **Visual Indicators**: Clear feedback for active states and interactions
-
 ### Technical Improvements
 
 #### Modular Architecture
@@ -64,80 +201,16 @@ All notable changes to this project will be documented in this file.
 - **Performance Optimization**: Efficient rendering of multiple sessions
 - **Memory Management**: Smart cleanup of inactive session data
 
-#### API Integration
-- **Advanced Parameters**: Full integration with Ollama's parameter system
-- **Enhanced Error Handling**: Better error messages and recovery
-- **Request Optimization**: Improved API call efficiency
-
-#### Code Architecture
-- **Modular Design**: Cleaner separation of concerns
-- **Event Handling**: Improved event management system
-- **Global State**: Better global state management for cross-component communication
-
-### UI/UX Improvements
-
-#### Visual Enhancements
-- **Session Tab Design**: Professional tab interface with close buttons
-- **Search Interface**: Elegant search panel with results display
-- **Advanced Controls**: Intuitive slider controls with real-time values
-- **Branch Button**: Clear visual indication for branching capability
-
-#### Interaction Improvements
-- **Double-click Rename**: Intuitive session renaming
-- **Hover States**: Enhanced hover effects throughout interface
-- **Loading States**: Better visual feedback during operations
-- **Responsive Design**: Improved mobile and tablet experience
-
-### Export Enhancements
-- **Session Metadata**: Export includes session name and creation info
-- **Advanced Settings**: Export includes all AI parameter settings
-- **Enhanced Filename**: More descriptive export filenames with session names
-
-### Technical Specifications
-- **Session Management**: Unlimited concurrent sessions
-- **Search Performance**: Optimized for large conversation histories
-- **Storage Efficiency**: Compressed data storage for better performance
-- **Browser Compatibility**: Enhanced support for all modern browsers
-
-### Development Improvements
-- **File Structure**: Clean separation of HTML, CSS, and JavaScript
-- **Maintainability**: Easier to modify and extend individual components
-- **Version Control**: Better Git diffs and collaboration workflow
-- **Build Ready**: Prepared for future build tools and optimization
-
 ## [1.3.0] - 2025-05-22
 
 ### Added
 - **Message Formatting**: Full markdown support for AI responses
-  - Headers (H1, H2, H3)
-  - Code blocks with syntax highlighting
-  - Inline code formatting
-  - Bold and italic text
-  - Blockquotes and lists
 - **Smart Model Selector**: Auto-detect available Ollama models
-  - Dropdown shows model names and file sizes
-  - Automatic model discovery from Ollama API
-  - Persistent model selection
 - **Copy Message Functionality**: One-click copy for any message
-  - Copy button appears on message hover
-  - Visual feedback when copying
-  - Works for both user and AI messages
 - **Message Timestamps**: Display when each message was sent
-  - Formatted timestamps on all messages
-  - Persistent timestamps in chat history
 - **Keyboard Shortcuts**: Enhanced productivity features
-  - `Ctrl+K`: Clear chat history
-  - `Ctrl+E`: Export conversation
-  - `Ctrl+/`: Focus input field
 - **Response Regeneration**: Regenerate AI responses
-  - 🔄 Regenerate button appears after AI responses
-  - Maintains conversation context
-  - Useful for getting alternative responses
-- **Enhanced UI Elements**:
-  - Tooltip for keyboard shortcuts in header
-  - Improved message hover states
-  - Better visual feedback throughout interface
-  - Copy confirmation notifications
+- **Enhanced UI Elements**: Improved visual feedback throughout interface
 
 ### Changed
 - Model selection now uses dropdown instead of text input
@@ -183,3 +256,30 @@ All notable changes to this project will be documented in this file.
 - Auto-scroll to bottom functionality
 - Error handling for connection issues
 - Enter key support for sending messages
+
+---
+
+## Upgrade Notes
+
+### From v1.4.x to v1.5.0
+- New file integration features require modern browser with File API support
+- Analytics data will be calculated for existing sessions on first load
+- New export formats provide more comprehensive data than previous JSON-only exports
+- Custom templates can be created and will persist across browser sessions
+
+### From v1.3.x to v1.4.0
+- Existing chat history will be automatically migrated to new session system
+- Advanced AI parameters will use default values until adjusted
+- Search functionality works across all existing conversations
+- All existing data and settings are preserved
+
+### Breaking Changes
+- **v1.5.0**: None - fully backward compatible
+- **v1.4.0**: None - automatic migration of existing data
+- **v1.3.0**: Model selection interface changed from text input to dropdown
+- **v1.2.0**: localStorage structure enhanced for persistence
+
+### Feature Deprecations
+- No features have been deprecated in this release
+- All previous functionality remains available and enhanced
+- Legacy export format (simple JSON) still available alongside new formats

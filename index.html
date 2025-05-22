@@ -9,11 +9,110 @@
 <body>
     <div class="copy-feedback" id="copyFeedback">Copied to clipboard!</div>
     
+    <!-- File Upload Modal -->
+    <div class="modal-overlay hidden" id="fileModalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Upload Files</h3>
+                <button class="modal-close" id="closeFileModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="file-upload-area" id="fileUploadArea">
+                    <div class="upload-placeholder">
+                        <span class="upload-icon">📁</span>
+                        <p>Drop files here or click to browse</p>
+                        <p class="upload-hint">Supports: PDF, TXT, MD, DOC, DOCX (Max 10MB each)</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.txt,.md,.doc,.docx" multiple hidden>
+                </div>
+                <div class="uploaded-files" id="uploadedFiles"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelFileUpload">Cancel</button>
+                <button class="btn-primary" id="processFiles">Process Files</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay hidden" id="exportModalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Export Conversation</h3>
+                <button class="modal-close" id="closeExportModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <h4>Export Format</h4>
+                    <div class="format-options">
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="json" checked>
+                            <span>JSON (Complete Data)</span>
+                        </label>
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="markdown">
+                            <span>Markdown (Text Only)</span>
+                        </label>
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="pdf">
+                            <span>PDF (Formatted Document)</span>
+                        </label>
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="txt">
+                            <span>Plain Text</span>
+                        </label>
+                    </div>
+                    
+                    <h4>Export Scope</h4>
+                    <div class="scope-options">
+                        <label class="scope-option">
+                            <input type="radio" name="exportScope" value="current" checked>
+                            <span>Current Session Only</span>
+                        </label>
+                        <label class="scope-option">
+                            <input type="radio" name="exportScope" value="all">
+                            <span>All Sessions</span>
+                        </label>
+                        <label class="scope-option">
+                            <input type="radio" name="exportScope" value="selected">
+                            <span>Selected Sessions</span>
+                        </label>
+                    </div>
+
+                    <div class="session-selector hidden" id="sessionSelector">
+                        <h4>Select Sessions</h4>
+                        <div class="session-list" id="exportSessionList"></div>
+                    </div>
+
+                    <h4>Options</h4>
+                    <div class="export-settings">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="includeTimestamps" checked>
+                            <span>Include Timestamps</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="includeSystemPrompts" checked>
+                            <span>Include System Prompts</span>
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="includeMetadata" checked>
+                            <span>Include Metadata</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelExport">Cancel</button>
+                <button class="btn-primary" id="startExport">Export</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="chat-container">
         <div class="chat-header">
             <div class="shortcuts-info tooltip">
                 <span>⌨️</span>
-                <span class="tooltiptext">Ctrl+K: Clear | Ctrl+E: Export | Ctrl+/: Focus | Ctrl+T: New Tab | Ctrl+F: Search</span>
+                <span class="tooltiptext">Ctrl+K: Clear | Ctrl+E: Export | Ctrl+/: Focus | Ctrl+T: New Tab | Ctrl+F: Search | Ctrl+U: Upload</span>
             </div>
             🤖 Ollama Chatbot
             <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
@@ -37,7 +136,9 @@
             <div class="status" id="status">Ready</div>
             
             <div class="control-buttons">
+                <button class="control-btn" id="fileUploadBtn">📁 Files</button>
                 <button class="control-btn" id="searchBtn">🔍 Search</button>
+                <button class="control-btn" id="summarizeBtn">📋 Summarize</button>
                 <button class="control-btn" id="clearHistoryBtn">🗑️ Clear</button>
                 <button class="control-btn" id="exportHistoryBtn">📥 Export</button>
                 <button class="control-btn" id="systemPromptBtn">⚙️ System</button>
@@ -77,6 +178,12 @@
                     <div class="range-value" id="topPValue">0.9</div>
                 </div>
             </div>
+
+            <!-- File Context Display -->
+            <div class="file-context hidden" id="fileContext">
+                <h4>Active Files</h4>
+                <div class="active-files" id="activeFiles"></div>
+            </div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -102,9 +209,38 @@
             <button class="send-button" id="sendButton">Send</button>
             <button class="regenerate-btn hidden" id="regenerateBtn">🔄</button>
             <button class="branch-btn hidden" id="branchBtn">🌿 Branch</button>
+            <button class="compare-btn hidden" id="compareBtn">⚖️ Compare</button>
         </div>
     </div>
 
+    <!-- Analytics Panel -->
+    <div class="analytics-panel hidden" id="analyticsPanel">
+        <div class="analytics-header">
+            <h3>Conversation Analytics</h3>
+            <button class="close-analytics" id="closeAnalytics">×</button>
+        </div>
+        <div class="analytics-content">
+            <div class="stat-item">
+                <span class="stat-label">Total Messages:</span>
+                <span class="stat-value" id="totalMessages">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Avg Response Time:</span>
+                <span class="stat-value" id="avgResponseTime">0ms</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Tokens Used:</span>
+                <span class="stat-value" id="tokensUsed">~0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Active Sessions:</span>
+                <span class="stat-value" id="activeSessions">1</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="export.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

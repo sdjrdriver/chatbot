@@ -55,6 +55,44 @@ function generateSessionId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
+// File handling utilities
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function getFileExtension(filename) {
+    return filename.split('.').pop().toLowerCase();
+}
+
+function isTextFile(filename) {
+    const textExtensions = ['txt', 'md', 'json', 'csv', 'xml', 'log'];
+    return textExtensions.includes(getFileExtension(filename));
+}
+
+// Conversation intelligence utilities
+function extractTopics(text) {
+    const words = text.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+    const wordCount = {};
+    words.forEach(word => {
+        wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+    
+    return Object.entries(wordCount)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([word]) => word);
+}
+
+function calculateReadingTime(text) {
+    const words = text.split(/\s+/).length;
+    const wordsPerMinute = 200;
+    return Math.ceil(words / wordsPerMinute);
+}
+
 class OllamaChatbot {
     constructor() {
         this.chatMessages = document.getElementById('chatMessages');
@@ -72,14 +110,22 @@ class OllamaChatbot {
         this.systemPromptBtn = document.getElementById('systemPromptBtn');
         this.advancedBtn = document.getElementById('advancedBtn');
         this.searchBtn = document.getElementById('searchBtn');
+        this.fileBtn = document.getElementById('fileBtn');
+        this.analyticsBtn = document.getElementById('analyticsBtn');
+        this.templatesBtn = document.getElementById('templatesBtn');
         this.systemPromptContainer = document.getElementById('systemPromptContainer');
         this.advancedControls = document.getElementById('advancedControls');
         this.searchContainer = document.getElementById('searchContainer');
+        this.fileContainer = document.getElementById('fileContainer');
+        this.analyticsContainer = document.getElementById('analyticsContainer');
+        this.templatesContainer = document.getElementById('templatesContainer');
         this.systemPrompt = document.getElementById('systemPrompt');
         this.searchInput = document.getElementById('searchInput');
         this.searchResults = document.getElementById('searchResults');
         this.sessionTabs = document.getElementById('sessionTabs');
         this.addSessionBtn = document.getElementById('addSessionBtn');
+        this.fileInput = document.getElementById('fileInput');
+        this.fileList = document.getElementById('fileList');
 
         // Advanced controls
         this.temperatureSlider = document.getElementById('temperatureSlider');
@@ -93,6 +139,37 @@ class OllamaChatbot {
         this.sessions = {};
         this.currentSessionId = '0';
         this.lastUserMessage = '';
+        this.uploadedFiles = {};
+        this.conversationAnalytics = {};
+        
+        // Conversation templates
+        this.conversationTemplates = {
+            brainstorm: {
+                name: "Brainstorming Session",
+                prompt: "Let's brainstorm ideas about: ",
+                systemPrompt: "You are a creative brainstorming partner. Help generate innovative ideas and build upon suggestions."
+            },
+            interview: {
+                name: "Interview Practice",
+                prompt: "I'd like to practice for an interview for: ",
+                systemPrompt: "You are an experienced interviewer. Ask relevant questions and provide constructive feedback."
+            },
+            debug: {
+                name: "Code Debugging",
+                prompt: "I need help debugging this code: ",
+                systemPrompt: "You are an expert debugger. Analyze code, identify issues, and suggest fixes with clear explanations."
+            },
+            learning: {
+                name: "Learning Assistant",
+                prompt: "I want to learn about: ",
+                systemPrompt: "You are a patient teacher. Break down complex topics into understandable parts with examples."
+            },
+            writing: {
+                name: "Writing Helper",
+                prompt: "I need help with writing: ",
+                systemPrompt: "You are a professional writing assistant. Help improve clarity, structure, and style."
+            }
+        };
         
         this.systemPrompts = {
             helpful: "You are a helpful, friendly, and knowledgeable assistant. Provide clear, accurate, and useful responses.",
@@ -108,6 +185,454 @@ class OllamaChatbot {
         this.loadAdvancedSettings();
         this.loadAvailableModels();
         this.setWelcomeTimestamp();
+        this.initFileHandling();
+        this.updateAnalytics();
+    }
+
+    initFileHandling() {
+        // Initialize file input if it exists
+        if (this.fileInput) {
+            this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+        }
+    }
+
+    async handleFileUpload(event) {
+        const files = Array.from(event.target.files);
+        const sessionFiles = this.uploadedFiles[this.currentSessionId] || [];
+        
+        for (const file of files) {
+            try {
+                const fileData = {
+                    id: generateSessionId(),
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    uploadDate: new Date().toISOString(),
+                    content: null
+                };
+                
+                // Read file content
+                if (isTextFile(file.name) || file.type.startsWith('text/')) {
+                    fileData.content = await this.readFileAsText(file);
+                } else {
+                    fileData.content = await this.readFileAsBase64(file);
+                }
+                
+                sessionFiles.push(fileData);
+                this.uploadedFiles[this.currentSessionId] = sessionFiles;
+                
+                // Show success message
+                this.addMessage(`📁 File uploaded successfully: ${file.name} (${formatFileSize(file.size)})`, 'system');
+                
+            } catch (error) {
+                this.addMessage(`❌ Error uploading file ${file.name}: ${error.message}`, 'system');
+            }
+        }
+        
+        this.updateFileList();
+        this.saveUploadedFiles();
+        event.target.value = ''; // Clear input
+    }
+
+    readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
+    readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    updateFileList() {
+        if (!this.fileList) return;
+        
+        const sessionFiles = this.uploadedFiles[this.currentSessionId] || [];
+        
+        if (sessionFiles.length === 0) {
+            this.fileList.innerHTML = '<div class="no-files">No files uploaded</div>';
+            return;
+        }
+        
+        this.fileList.innerHTML = sessionFiles.map(file => `
+            <div class="file-item" data-file-id="${file.id}">
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+                <div class="file-actions">
+                    <button class="file-action-btn" onclick="chatbot.useFileInContext('${file.id}')" title="Use in context">🔗</button>
+                    <button class="file-action-btn" onclick="chatbot.removeFile('${file.id}')" title="Remove">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    useFileInContext(fileId) {
+        const sessionFiles = this.uploadedFiles[this.currentSessionId] || [];
+        const file = sessionFiles.find(f => f.id === fileId);
+        
+        if (!file) return;
+        
+        if (isTextFile(file.name) && file.content) {
+            const contextMessage = `📎 Using file context from "${file.name}":\n\n${file.content.substring(0, 1000)}${file.content.length > 1000 ? '...' : ''}`;
+            this.messageInput.value = contextMessage + '\n\n' + this.messageInput.value;
+            this.messageInput.focus();
+        } else {
+            this.addMessage(`📎 File "${file.name}" is now available as context for your next question.`, 'system');
+        }
+    }
+
+    removeFile(fileId) {
+        const sessionFiles = this.uploadedFiles[this.currentSessionId] || [];
+        this.uploadedFiles[this.currentSessionId] = sessionFiles.filter(f => f.id !== fileId);
+        this.updateFileList();
+        this.saveUploadedFiles();
+        this.addMessage(`🗑️ File removed from session.`, 'system');
+    }
+
+    saveUploadedFiles() {
+        localStorage.setItem('chatbot-uploaded-files', JSON.stringify(this.uploadedFiles));
+    }
+
+    loadUploadedFiles() {
+        const saved = localStorage.getItem('chatbot-uploaded-files');
+        if (saved) {
+            this.uploadedFiles = JSON.parse(saved);
+        }
+    }
+
+    // Conversation Analytics
+    updateAnalytics() {
+        const session = this.sessions[this.currentSessionId];
+        if (!session) return;
+        
+        const messages = session.history || [];
+        const userMessages = messages.filter(m => m.sender === 'user');
+        const botMessages = messages.filter(m => m.sender === 'bot');
+        
+        const analytics = {
+            totalMessages: messages.length,
+            userMessages: userMessages.length,
+            botMessages: botMessages.length,
+            totalWords: messages.reduce((acc, m) => acc + (m.content ? m.content.split(' ').length : 0), 0),
+            estimatedTokens: messages.reduce((acc, m) => acc + Math.ceil((m.content?.length || 0) / 4), 0),
+            readingTime: calculateReadingTime(messages.map(m => m.content || '').join(' ')),
+            topics: extractTopics(messages.map(m => m.content || '').join(' ')),
+            sessionDuration: this.calculateSessionDuration(messages)
+        };
+        
+        this.conversationAnalytics[this.currentSessionId] = analytics;
+        this.renderAnalytics(analytics);
+    }
+
+    calculateSessionDuration(messages) {
+        if (messages.length < 2) return 0;
+        const first = new Date(messages[0].timestamp);
+        const last = new Date(messages[messages.length - 1].timestamp);
+        return Math.round((last - first) / (1000 * 60)); // minutes
+    }
+
+    renderAnalytics(analytics) {
+        const container = document.getElementById('analyticsContent');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h4>Messages</h4>
+                    <div class="analytics-value">${analytics.totalMessages}</div>
+                    <div class="analytics-detail">${analytics.userMessages} from you, ${analytics.botMessages} from AI</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Words</h4>
+                    <div class="analytics-value">${analytics.totalWords.toLocaleString()}</div>
+                    <div class="analytics-detail">~${analytics.estimatedTokens.toLocaleString()} tokens</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Reading Time</h4>
+                    <div class="analytics-value">${analytics.readingTime} min</div>
+                    <div class="analytics-detail">Session: ${analytics.sessionDuration} min</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Top Topics</h4>
+                    <div class="analytics-topics">${analytics.topics.slice(0, 3).join(', ')}</div>
+                </div>
+            </div>
+            <div class="analytics-actions">
+                <button class="analytics-btn" onclick="chatbot.generateSummary()">📋 Generate Summary</button>
+                <button class="analytics-btn" onclick="chatbot.exportAnalytics()">📊 Export Analytics</button>
+            </div>
+        `;
+    }
+
+    async generateSummary() {
+        const session = this.sessions[this.currentSessionId];
+        if (!session || !session.history.length) return;
+        
+        const messages = session.history.map(m => `${m.sender}: ${m.content}`).join('\n');
+        const summaryPrompt = `Please provide a concise summary of this conversation:\n\n${messages.substring(0, 2000)}`;
+        
+        this.addMessage('🤖 Generating conversation summary...', 'system');
+        
+        try {
+            const response = await fetch(`${this.ollamaUrl.value}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: this.modelSelector.value,
+                    prompt: summaryPrompt,
+                    stream: false,
+                    options: { temperature: 0.3, num_predict: 200 }
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.addMessage(`📋 **Conversation Summary:**\n\n${data.response}`, 'bot');
+            } else {
+                throw new Error('Failed to generate summary');
+            }
+        } catch (error) {
+            this.addMessage(`❌ Error generating summary: ${error.message}`, 'system');
+        }
+    }
+
+    exportAnalytics() {
+        const analytics = this.conversationAnalytics[this.currentSessionId];
+        if (!analytics) return;
+        
+        const data = {
+            sessionName: this.sessions[this.currentSessionId].name,
+            timestamp: new Date().toISOString(),
+            analytics: analytics,
+            model: this.modelSelector.value
+        };
+        
+        this.downloadJSON(data, `analytics-${this.currentSessionId}-${Date.now()}.json`);
+    }
+
+    // Conversation Templates
+    renderTemplates() {
+        const container = document.getElementById('templatesContent');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="templates-grid">
+                ${Object.entries(this.conversationTemplates).map(([key, template]) => `
+                    <div class="template-card" onclick="chatbot.useTemplate('${key}')">
+                        <h4>${template.name}</h4>
+                        <p>${template.prompt}</p>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="template-actions">
+                <button class="template-btn" onclick="chatbot.createCustomTemplate()">➕ Create Custom Template</button>
+            </div>
+        `;
+    }
+
+    useTemplate(templateKey) {
+        const template = this.conversationTemplates[templateKey];
+        if (!template) return;
+        
+        // Set system prompt
+        this.systemPrompt.value = template.systemPrompt;
+        this.saveSystemPrompt();
+        
+        // Set message input
+        this.messageInput.value = template.prompt;
+        this.messageInput.focus();
+        
+        // Hide templates
+        if (this.templatesContainer) {
+            this.templatesContainer.classList.add('hidden');
+        }
+        
+        this.addMessage(`📝 Template "${template.name}" loaded. Complete the prompt and send your message.`, 'system');
+    }
+
+    createCustomTemplate() {
+        const name = prompt('Enter template name:');
+        if (!name) return;
+        
+        const prompt = prompt('Enter template prompt:');
+        if (!prompt) return;
+        
+        const systemPrompt = prompt('Enter system prompt (optional):') || '';
+        
+        const key = name.toLowerCase().replace(/\s+/g, '_');
+        this.conversationTemplates[key] = {
+            name: name,
+            prompt: prompt,
+            systemPrompt: systemPrompt
+        };
+        
+        this.saveCustomTemplates();
+        this.renderTemplates();
+        this.addMessage(`✅ Custom template "${name}" created successfully.`, 'system');
+    }
+
+    saveCustomTemplates() {
+        const customTemplates = {};
+        Object.entries(this.conversationTemplates).forEach(([key, template]) => {
+            if (!['brainstorm', 'interview', 'debug', 'learning', 'writing'].includes(key)) {
+                customTemplates[key] = template;
+            }
+        });
+        localStorage.setItem('chatbot-custom-templates', JSON.stringify(customTemplates));
+    }
+
+    loadCustomTemplates() {
+        const saved = localStorage.getItem('chatbot-custom-templates');
+        if (saved) {
+            const customTemplates = JSON.parse(saved);
+            this.conversationTemplates = { ...this.conversationTemplates, ...customTemplates };
+        }
+    }
+
+    // Enhanced Export System
+    async exportEnhanced(format = 'json') {
+        const session = this.sessions[this.currentSessionId];
+        const analytics = this.conversationAnalytics[this.currentSessionId];
+        const files = this.uploadedFiles[this.currentSessionId] || [];
+        
+        const exportData = {
+            version: '1.5.0',
+            timestamp: new Date().toISOString(),
+            session: {
+                id: session.id,
+                name: session.name,
+                model: this.modelSelector.value,
+                systemPrompt: this.systemPrompt.value,
+                advancedSettings: {
+                    temperature: parseFloat(this.temperatureSlider.value),
+                    maxTokens: parseInt(this.maxTokensSlider.value),
+                    topP: parseFloat(this.topPSlider.value)
+                }
+            },
+            messages: session.history || [],
+            analytics: analytics,
+            files: files.map(f => ({ name: f.name, size: f.size, type: f.type, uploadDate: f.uploadDate })),
+            metadata: {
+                messageCount: session.history?.length || 0,
+                wordCount: analytics?.totalWords || 0,
+                exportFormat: format
+            }
+        };
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const sessionName = session.name.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        switch (format) {
+            case 'json':
+                this.downloadJSON(exportData, `ollama-chat-${sessionName}-${timestamp}.json`);
+                break;
+            case 'markdown':
+                this.downloadMarkdown(exportData, `ollama-chat-${sessionName}-${timestamp}.md`);
+                break;
+            case 'txt':
+                this.downloadText(exportData, `ollama-chat-${sessionName}-${timestamp}.txt`);
+                break;
+            case 'html':
+                this.downloadHTML(exportData, `ollama-chat-${sessionName}-${timestamp}.html`);
+                break;
+        }
+    }
+
+    downloadJSON(data, filename) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        this.downloadBlob(blob, filename);
+    }
+
+    downloadMarkdown(data, filename) {
+        let markdown = `# ${data.session.name}\n\n`;
+        markdown += `**Export Date:** ${new Date(data.timestamp).toLocaleString()}\n`;
+        markdown += `**Model:** ${data.session.model}\n`;
+        if (data.analytics) {
+            markdown += `**Messages:** ${data.analytics.totalMessages}\n`;
+            markdown += `**Words:** ${data.analytics.totalWords}\n`;
+        }
+        markdown += '\n---\n\n';
+        
+        data.messages.forEach(msg => {
+            const speaker = msg.sender === 'user' ? '👤 **You**' : '🤖 **Assistant**';
+            markdown += `## ${speaker}\n\n${msg.content}\n\n`;
+        });
+        
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        this.downloadBlob(blob, filename);
+    }
+
+    downloadText(data, filename) {
+        let text = `${data.session.name}\n`;
+        text += `Export Date: ${new Date(data.timestamp).toLocaleString()}\n`;
+        text += `Model: ${data.session.model}\n`;
+        text += '\n' + '='.repeat(50) + '\n\n';
+        
+        data.messages.forEach(msg => {
+            const speaker = msg.sender === 'user' ? 'You' : 'Assistant';
+            text += `${speaker}: ${msg.content}\n\n`;
+        });
+        
+        const blob = new Blob([text], { type: 'text/plain' });
+        this.downloadBlob(blob, filename);
+    }
+
+    downloadHTML(data, filename) {
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${data.session.name}</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+                .header { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+                .message { margin-bottom: 20px; padding: 15px; border-radius: 10px; }
+                .user { background: #e3f2fd; margin-left: 20px; }
+                .bot { background: #f5f5f5; margin-right: 20px; }
+                .speaker { font-weight: bold; margin-bottom: 5px; }
+                .timestamp { font-size: 0.8em; color: #666; margin-top: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>${data.session.name}</h1>
+                <p><strong>Export Date:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                <p><strong>Model:</strong> ${data.session.model}</p>
+                ${data.analytics ? `<p><strong>Messages:</strong> ${data.analytics.totalMessages} | <strong>Words:</strong> ${data.analytics.totalWords}</p>` : ''}
+            </div>
+            ${data.messages.map(msg => `
+                <div class="message ${msg.sender}">
+                    <div class="speaker">${msg.sender === 'user' ? '👤 You' : '🤖 Assistant'}</div>
+                    <div class="content">${msg.content.replace(/\n/g, '<br>')}</div>
+                    ${msg.timestamp ? `<div class="timestamp">${new Date(msg.timestamp).toLocaleString()}</div>` : ''}
+                </div>
+            `).join('')}
+        </body>
+        </html>`;
+        
+        const blob = new Blob([html], { type: 'text/html' });
+        this.downloadBlob(blob, filename);
+    }
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     initSessions() {
@@ -128,6 +653,8 @@ class OllamaChatbot {
             this.currentSessionId = activeSession.id;
         }
         
+        this.loadUploadedFiles();
+        this.loadCustomTemplates();
         this.renderSessionTabs();
         this.loadCurrentSession();
     }
@@ -187,6 +714,8 @@ class OllamaChatbot {
         }
         
         delete this.sessions[sessionId];
+        delete this.uploadedFiles[sessionId];
+        delete this.conversationAnalytics[sessionId];
         
         if (this.currentSessionId === sessionId) {
             // Switch to first available session
@@ -197,6 +726,7 @@ class OllamaChatbot {
         
         this.renderSessionTabs();
         this.saveSessions();
+        this.saveUploadedFiles();
     }
 
     switchSession(sessionId) {
@@ -211,6 +741,8 @@ class OllamaChatbot {
         // Load new session
         this.loadCurrentSession();
         this.renderSessionTabs();
+        this.updateFileList();
+        this.updateAnalytics();
         this.saveSessions();
     }
 
@@ -223,13 +755,13 @@ class OllamaChatbot {
             this.saveSessions();
         }
     }
-
+ 
     saveCurrentSession() {
         if (this.sessions[this.currentSessionId]) {
             this.sessions[this.currentSessionId].history = this.getCurrentChatHistory();
         }
     }
-
+ 
     loadCurrentSession() {
         const session = this.sessions[this.currentSessionId];
         if (!session) return;
@@ -250,12 +782,16 @@ class OllamaChatbot {
         this.scrollToBottom();
         this.updateRegenerateButton();
     }
-
+ 
     getCurrentChatHistory() {
         const messages = [];
         this.chatMessages.querySelectorAll('.message').forEach(messageEl => {
             const isUser = messageEl.classList.contains('user');
+            const isSystem = messageEl.classList.contains('system');
             const contentEl = messageEl.querySelector('.message-content');
+            
+            if (isSystem) return; // Skip system messages in history
+            
             const textContent = contentEl.textContent || contentEl.innerText;
             const lines = textContent.split('\n');
             const content = lines[0]; // Remove timestamp line
@@ -268,11 +804,11 @@ class OllamaChatbot {
         });
         return messages;
     }
-
+ 
     saveSessions() {
         localStorage.setItem('chatbot-sessions', JSON.stringify(this.sessions));
     }
-
+ 
     branchConversation() {
         // Create new session with current history up to last user message
         const currentHistory = this.getCurrentChatHistory();
@@ -317,10 +853,22 @@ class OllamaChatbot {
         this.modelSelector.addEventListener('change', () => this.testConnection());
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
-        this.exportHistoryBtn.addEventListener('click', () => this.exportHistory());
+        this.exportHistoryBtn.addEventListener('click', () => this.showExportOptions());
         this.systemPromptBtn.addEventListener('click', () => this.toggleSystemPrompt());
         this.advancedBtn.addEventListener('click', () => this.toggleAdvancedControls());
         this.searchBtn.addEventListener('click', () => this.toggleSearch());
+        
+        // New v1.5.0 event listeners
+        if (this.fileBtn) {
+            this.fileBtn.addEventListener('click', () => this.toggleFileManager());
+        }
+        if (this.analyticsBtn) {
+            this.analyticsBtn.addEventListener('click', () => this.toggleAnalytics());
+        }
+        if (this.templatesBtn) {
+            this.templatesBtn.addEventListener('click', () => this.toggleTemplates());
+        }
+        
         this.systemPrompt.addEventListener('input', () => this.saveSystemPrompt());
         this.searchInput.addEventListener('input', () => this.performSearch());
         
@@ -345,7 +893,7 @@ class OllamaChatbot {
                 this.setSystemPromptPreset(preset);
             });
         });
-
+ 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -356,7 +904,7 @@ class OllamaChatbot {
                         break;
                     case 'e':
                         e.preventDefault();
-                        this.exportHistory();
+                        this.showExportOptions();
                         break;
                     case '/':
                         e.preventDefault();
@@ -370,11 +918,127 @@ class OllamaChatbot {
                         e.preventDefault();
                         this.toggleSearch();
                         break;
+                    case 'u':
+                        e.preventDefault();
+                        if (this.fileInput) this.fileInput.click();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        this.toggleAnalytics();
+                        break;
                 }
             }
         });
     }
-
+ 
+    showExportOptions() {
+        const modal = document.createElement('div');
+        modal.className = 'export-modal';
+        modal.innerHTML = `
+            <div class="export-modal-content">
+                <h3>Export Conversation</h3>
+                <div class="export-options">
+                    <button class="export-option-btn" onclick="chatbot.exportEnhanced('json')">
+                        📄 JSON <small>(Complete data)</small>
+                    </button>
+                    <button class="export-option-btn" onclick="chatbot.exportEnhanced('markdown')">
+                        📝 Markdown <small>(Formatted text)</small>
+                    </button>
+                    <button class="export-option-btn" onclick="chatbot.exportEnhanced('html')">
+                        🌐 HTML <small>(Web page)</small>
+                    </button>
+                    <button class="export-option-btn" onclick="chatbot.exportEnhanced('txt')">
+                        📋 Text <small>(Plain text)</small>
+                    </button>
+                </div>
+                <div class="export-actions">
+                    <button class="export-cancel-btn" onclick="this.closest('.export-modal').remove()">Cancel</button>
+                    <button class="export-batch-btn" onclick="chatbot.exportAllSessions()">Export All Sessions</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Auto-close after export
+        setTimeout(() => {
+            if (document.body.contains(modal)) {
+                modal.remove();
+            }
+        }, 30000);
+    }
+ 
+    async exportAllSessions() {
+        const allData = {
+            version: '1.5.0',
+            exportDate: new Date().toISOString(),
+            sessions: [],
+            globalAnalytics: {
+                totalSessions: Object.keys(this.sessions).length,
+                totalMessages: 0,
+                totalWords: 0
+            }
+        };
+        
+        for (const [sessionId, session] of Object.entries(this.sessions)) {
+            const analytics = this.conversationAnalytics[sessionId];
+            const files = this.uploadedFiles[sessionId] || [];
+            
+            allData.sessions.push({
+                id: sessionId,
+                name: session.name,
+                messages: session.history || [],
+                analytics: analytics,
+                files: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+            });
+            
+            if (analytics) {
+                allData.globalAnalytics.totalMessages += analytics.totalMessages || 0;
+                allData.globalAnalytics.totalWords += analytics.totalWords || 0;
+            }
+        }
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        this.downloadJSON(allData, `ollama-chatbot-all-sessions-${timestamp}.json`);
+        
+        // Close modal
+        document.querySelector('.export-modal')?.remove();
+    }
+ 
+    toggleFileManager() {
+        if (this.fileContainer) {
+            this.fileContainer.classList.toggle('hidden');
+            if (!this.fileContainer.classList.contains('hidden')) {
+                this.updateFileList();
+            }
+        }
+    }
+ 
+    toggleAnalytics() {
+        if (this.analyticsContainer) {
+            this.analyticsContainer.classList.toggle('hidden');
+            if (!this.analyticsContainer.classList.contains('hidden')) {
+                this.updateAnalytics();
+            }
+        }
+    }
+ 
+    toggleTemplates() {
+        if (this.templatesContainer) {
+            this.templatesContainer.classList.toggle('hidden');
+            if (!this.templatesContainer.classList.contains('hidden')) {
+                this.renderTemplates();
+            }
+        }
+    }
+ 
     performSearch() {
         const query = this.searchInput.value.toLowerCase().trim();
         const resultsContainer = this.searchResults;
@@ -385,27 +1049,34 @@ class OllamaChatbot {
             return;
         }
         
-        const messages = this.chatMessages.querySelectorAll('.message');
-        const results = [];
+        // Search across all sessions
+        const allResults = [];
         
-        messages.forEach((messageEl, index) => {
-            const content = messageEl.querySelector('.message-content').textContent.toLowerCase();
-            if (content.includes(query)) {
-                const isUser = messageEl.classList.contains('user');
-                const preview = content.substring(0, 100) + (content.length > 100 ? '...' : '');
-                results.push({
-                    index,
-                    element: messageEl,
-                    preview,
-                    sender: isUser ? 'You' : 'Bot'
-                });
-            }
+        Object.entries(this.sessions).forEach(([sessionId, session]) => {
+            const messages = session.history || [];
+            messages.forEach((msg, index) => {
+                const content = msg.content.toLowerCase();
+                if (content.includes(query)) {
+                    const preview = msg.content.substring(0, 100) + (msg.content.length > 100 ? '...' : '');
+                    allResults.push({
+                        sessionId,
+                        sessionName: session.name,
+                        messageIndex: index,
+                        preview,
+                        sender: msg.sender === 'user' ? 'You' : 'Bot',
+                        timestamp: msg.timestamp
+                    });
+                }
+            });
         });
         
-        if (results.length > 0) {
-            resultsContainer.innerHTML = results.map(result => `
-                <div class="search-result" data-index="${result.index}">
-                    <strong>${result.sender}:</strong>
+        if (allResults.length > 0) {
+            resultsContainer.innerHTML = allResults.map(result => `
+                <div class="search-result" data-session-id="${result.sessionId}" data-message-index="${result.messageIndex}">
+                    <div class="search-result-header">
+                        <strong>${result.sender}</strong> in <em>${result.sessionName}</em>
+                        ${result.timestamp ? `<span class="search-timestamp">${formatTimestamp(new Date(result.timestamp))}</span>` : ''}
+                    </div>
                     <div class="search-result-preview">${result.preview}</div>
                 </div>
             `).join('');
@@ -415,9 +1086,20 @@ class OllamaChatbot {
             // Add click handlers
             resultsContainer.querySelectorAll('.search-result').forEach(resultEl => {
                 resultEl.addEventListener('click', () => {
-                    const index = parseInt(resultEl.dataset.index);
-                    this.scrollToMessage(results[index].element);
-                    this.highlightMessage(results[index].element);
+                    const sessionId = resultEl.dataset.sessionId;
+                    const messageIndex = parseInt(resultEl.dataset.messageIndex);
+                    
+                    if (sessionId !== this.currentSessionId) {
+                        this.switchSession(sessionId);
+                    }
+                    
+                    setTimeout(() => {
+                        const messages = this.chatMessages.querySelectorAll('.message');
+                        if (messages[messageIndex]) {
+                            this.scrollToMessage(messages[messageIndex]);
+                            this.highlightMessage(messages[messageIndex]);
+                        }
+                    }, 100);
                 });
             });
         } else {
@@ -425,11 +1107,11 @@ class OllamaChatbot {
             resultsContainer.classList.remove('hidden');
         }
     }
-
+ 
     scrollToMessage(messageEl) {
         messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-
+ 
     highlightMessage(messageEl) {
         this.clearHighlights();
         messageEl.classList.add('highlighted');
@@ -437,13 +1119,13 @@ class OllamaChatbot {
             messageEl.classList.remove('highlighted');
         }, 3000);
     }
-
+ 
     clearHighlights() {
         this.chatMessages.querySelectorAll('.highlighted').forEach(el => {
             el.classList.remove('highlighted');
         });
     }
-
+ 
     toggleSearch() {
         this.searchContainer.classList.toggle('hidden');
         if (!this.searchContainer.classList.contains('hidden')) {
@@ -452,11 +1134,11 @@ class OllamaChatbot {
             this.clearHighlights();
         }
     }
-
+ 
     toggleAdvancedControls() {
         this.advancedControls.classList.toggle('hidden');
     }
-
+ 
     loadAdvancedSettings() {
         const settings = JSON.parse(localStorage.getItem('chatbot-advanced-settings') || '{}');
         
@@ -468,7 +1150,7 @@ class OllamaChatbot {
         this.maxTokensValue.textContent = this.maxTokensSlider.value;
         this.topPValue.textContent = this.topPSlider.value;
     }
-
+ 
     saveAdvancedSettings() {
         const settings = {
             temperature: parseFloat(this.temperatureSlider.value),
@@ -477,7 +1159,7 @@ class OllamaChatbot {
         };
         localStorage.setItem('chatbot-advanced-settings', JSON.stringify(settings));
     }
-
+ 
     setWelcomeTimestamp() {
         const welcomeTimestamp = document.getElementById('welcomeTimestamp');
         if (welcomeTimestamp) {
@@ -489,14 +1171,14 @@ class OllamaChatbot {
         const savedTheme = localStorage.getItem('chatbot-theme') || 'light';
         this.setTheme(savedTheme);
     }
-
+ 
     toggleTheme() {
         const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         this.setTheme(newTheme);
         localStorage.setItem('chatbot-theme', newTheme);
     }
-
+ 
     setTheme(theme) {
         if (theme === 'dark') {
             document.body.classList.add('dark-mode');
@@ -506,7 +1188,7 @@ class OllamaChatbot {
             this.themeToggle.innerHTML = '🌙 Dark';
         }
     }
-
+ 
     async loadAvailableModels() {
         try {
             const response = await fetch(`${this.ollamaUrl.value}/api/tags`);
@@ -521,7 +1203,7 @@ class OllamaChatbot {
             this.modelSelector.innerHTML = '<option value="">Connection error</option>';
         }
     }
-
+ 
     populateModelSelector(models) {
         const savedModel = localStorage.getItem('chatbot-selected-model') || 'llama3.2:3b';
         this.modelSelector.innerHTML = '';
@@ -539,13 +1221,13 @@ class OllamaChatbot {
         } else {
             this.modelSelector.innerHTML = '<option value="">No models available</option>';
         }
-
+ 
         // Save selection changes
         this.modelSelector.addEventListener('change', () => {
             localStorage.setItem('chatbot-selected-model', this.modelSelector.value);
         });
     }
-
+ 
     formatFileSize(bytes) {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -564,37 +1246,14 @@ class OllamaChatbot {
             
             // Update session
             this.sessions[this.currentSessionId].history = [];
+            this.conversationAnalytics[this.currentSessionId] = {};
             this.saveSessions();
+            this.updateAnalytics();
         }
     }
     
     exportHistory() {
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        const sessionName = this.sessions[this.currentSessionId].name.replace(/[^a-zA-Z0-9]/g, '_');
-        const filename = `ollama-chat-${sessionName}-${timestamp}.json`;
-        
-        const exportData = {
-            timestamp: new Date().toISOString(),
-            sessionName: this.sessions[this.currentSessionId].name,
-            model: this.modelSelector.value,
-            systemPrompt: this.systemPrompt.value,
-            advancedSettings: {
-                temperature: parseFloat(this.temperatureSlider.value),
-                maxTokens: parseInt(this.maxTokensSlider.value),
-                topP: parseFloat(this.topPSlider.value)
-            },
-            messages: this.getCurrentChatHistory()
-        };
-        
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        this.showExportOptions();
     }
     
     toggleSystemPrompt() {
@@ -625,7 +1284,7 @@ class OllamaChatbot {
             this.updateStatus('No model selected', 'error');
             return;
         }
-
+ 
         try {
             const response = await fetch(`${this.ollamaUrl.value}/api/tags`);
             if (response.ok) {
@@ -649,7 +1308,7 @@ class OllamaChatbot {
         this.status.textContent = text;
         this.status.className = `status ${type}`;
     }
-
+ 
     updateRegenerateButton() {
         const messages = this.chatMessages.querySelectorAll('.message');
         const lastMessage = messages[messages.length - 1];
@@ -662,7 +1321,7 @@ class OllamaChatbot {
             this.branchBtn.classList.add('hidden');
         }
     }
-
+ 
     async regenerateResponse() {
         if (!this.lastUserMessage) return;
         
@@ -695,25 +1354,36 @@ class OllamaChatbot {
         
         await this.generateResponse(message);
     }
-
+ 
     async generateResponse(message) {
         // Show typing indicator
         this.showTyping();
         
         try {
-            // Prepare the prompt with system prompt if set
+            // Prepare the prompt with system prompt and file context if set
             let fullPrompt = message;
             const systemPromptText = this.systemPrompt.value.trim();
-            if (systemPromptText) {
-                fullPrompt = `${systemPromptText}\n\nUser: ${message}`;
+            const sessionFiles = this.uploadedFiles[this.currentSessionId] || [];
+            
+            // Add file context if available
+            const textFiles = sessionFiles.filter(f => isTextFile(f.name) && f.content);
+            if (textFiles.length > 0) {
+                const fileContext = textFiles.map(f => `File: ${f.name}\n${f.content.substring(0, 2000)}`).join('\n\n');
+                fullPrompt = `Context from uploaded files:\n${fileContext}\n\nUser question: ${message}`;
             }
-
+            
+            if (systemPromptText) {
+                fullPrompt = `${systemPromptText}\n\n${fullPrompt}`;
+            }
+ 
             // Get advanced settings
             const advancedSettings = {
                 temperature: parseFloat(this.temperatureSlider.value),
                 num_predict: parseInt(this.maxTokensSlider.value),
                 top_p: parseFloat(this.topPSlider.value)
             };
+            
+            const startTime = Date.now();
             
             const response = await fetch(`${this.ollamaUrl.value}/api/generate`, {
                 method: 'POST',
@@ -733,8 +1403,13 @@ class OllamaChatbot {
             }
             
             const data = await response.json();
+            const responseTime = Date.now() - startTime;
+            
             this.hideTyping();
             this.addMessage(data.response, 'bot');
+            
+            // Update analytics with response time
+            this.updateResponseAnalytics(responseTime, data.response);
             
             // Show control buttons
             this.updateRegenerateButton();
@@ -751,12 +1426,28 @@ class OllamaChatbot {
             this.branchBtn.disabled = false;
             this.messageInput.focus();
             
-            // Save session
+            // Save session and update analytics
             this.saveCurrentSession();
             this.saveSessions();
+            this.updateAnalytics();
         }
     }
-
+ 
+    updateResponseAnalytics(responseTime, responseText) {
+        const analytics = this.conversationAnalytics[this.currentSessionId] || {};
+        
+        if (!analytics.responseTimes) {
+            analytics.responseTimes = [];
+        }
+        
+        analytics.responseTimes.push(responseTime);
+        analytics.averageResponseTime = analytics.responseTimes.reduce((a, b) => a + b, 0) / analytics.responseTimes.length;
+        analytics.lastResponseTime = responseTime;
+        analytics.lastResponseLength = responseText.length;
+        
+        this.conversationAnalytics[this.currentSessionId] = analytics;
+    }
+ 
     copyMessage(content) {
         navigator.clipboard.writeText(content).then(() => {
             showCopyFeedback();
@@ -771,7 +1462,7 @@ class OllamaChatbot {
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.textContent = sender === 'user' ? '👤' : '🤖';
+        avatar.textContent = sender === 'user' ? '👤' : sender === 'system' ? '⚙️' : '🤖';
         
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -782,31 +1473,88 @@ class OllamaChatbot {
         } else {
             messageContent.textContent = content;
         }
-
-        // Add timestamp
-        const timestampDiv = document.createElement('div');
-        timestampDiv.className = 'message-timestamp';
-        timestampDiv.textContent = formatTimestamp(timestamp);
-        messageContent.appendChild(timestampDiv);
-
-        // Add message actions
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'message-actions';
-        
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'action-btn';
-        copyBtn.innerHTML = '📋';
-        copyBtn.title = 'Copy message';
-        copyBtn.onclick = () => this.copyMessage(content);
-        
-        actionsDiv.appendChild(copyBtn);
-        messageContent.appendChild(actionsDiv);
+ 
+        // Add timestamp (skip for system messages)
+        if (sender !== 'system') {
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'message-timestamp';
+            timestampDiv.textContent = formatTimestamp(timestamp);
+            messageContent.appendChild(timestampDiv);
+        }
+ 
+        // Add message actions (skip for system messages)
+        if (sender !== 'system') {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn';
+            copyBtn.innerHTML = '📋';
+            copyBtn.title = 'Copy message';
+            copyBtn.onclick = () => this.copyMessage(content);
+            
+            actionsDiv.appendChild(copyBtn);
+            
+            // Add model comparison button for bot messages
+            if (sender === 'bot') {
+                const compareBtn = document.createElement('button');
+                compareBtn.className = 'action-btn';
+                compareBtn.innerHTML = '⚖️';
+                compareBtn.title = 'Compare with other models';
+                compareBtn.onclick = () => this.compareResponse(this.lastUserMessage);
+                actionsDiv.appendChild(compareBtn);
+            }
+            
+            messageContent.appendChild(actionsDiv);
+        }
         
         messageDiv.appendChild(avatar);
         messageDiv.appendChild(messageContent);
         
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
+    }
+ 
+    async compareResponse(userMessage) {
+        if (!userMessage) return;
+        
+        try {
+            const response = await fetch(`${this.ollamaUrl.value}/api/tags`);
+            const data = await response.json();
+            const models = data.models.filter(m => m.name !== this.modelSelector.value).slice(0, 2); // Compare with 2 other models
+            
+            if (models.length === 0) {
+                this.addMessage('No other models available for comparison.', 'system');
+                return;
+            }
+            
+            this.addMessage(`🔄 Comparing responses from ${models.length} other models...`, 'system');
+            
+            for (const model of models) {
+                try {
+                    const compareResponse = await fetch(`${this.ollamaUrl.value}/api/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: model.name,
+                            prompt: userMessage,
+                            stream: false,
+                            options: { temperature: 0.8, num_predict: 500 }
+                        })
+                    });
+                    
+                    if (compareResponse.ok) {
+                        const compareData = await compareResponse.json();
+                        this.addMessage(`**${model.name} says:**\n\n${compareData.response}`, 'bot');
+                    }
+                } catch (error) {
+                    this.addMessage(`❌ Error getting response from ${model.name}`, 'system');
+                }
+            }
+            
+        } catch (error) {
+            this.addMessage('❌ Error comparing responses: ' + error.message, 'system');
+        }
     }
     
     showTyping() {
@@ -821,12 +1569,12 @@ class OllamaChatbot {
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
-}
-
-// Global reference for session management
-let chatbot;
-
-// Initialize the chatbot when the page loads
-document.addEventListener('DOMContentLoaded', () => {
+ }
+ 
+ // Global reference for session management
+ let chatbot;
+ 
+ // Initialize the chatbot when the page loads
+ document.addEventListener('DOMContentLoaded', () => {
     chatbot = new OllamaChatbot();
-});
+ });
