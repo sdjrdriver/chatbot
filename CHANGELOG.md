@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-05-22
+
+### Added
+- Persistent chat history using localStorage
+- Chat export functionality (JSON format)
+- System prompt customization
+- Preset system prompts (Helpful, Coding, Creative, Technical)
+- Clear history functionality with confirmation
+- Enhanced control panel with action buttons
+
 ## [1.1.0] - 2025-05-22
 
 ### Added

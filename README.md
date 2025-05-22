@@ -15,6 +15,12 @@ A modern web interface for interacting with Ollama AI models.
 - Persistent theme preference
 - Smooth theme transitions
 
+## Advanced Features
+- Persistent chat history
+- Chat export functionality  
+- System prompt customization
+- Preset system prompts for different use cases
+
 ## Setup
 1. Ensure Ollama is running and accessible
 2. Configure CORS: `Environment="OLLAMA_ORIGINS=*"`

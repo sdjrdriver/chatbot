@@ -78,6 +78,150 @@
             background: rgba(255,255,255,0.3);
         }
         
+        .config-panel {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e5e9;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            flex-wrap: wrap;
+        }
+
+        .dark-mode .config-panel {
+            background: #1a202c;
+            border-bottom-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .config-panel input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .dark-mode .config-panel input {
+            background: #4a5568;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .config-panel input::placeholder {
+            color: #a0aec0;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .control-btn {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .dark-mode .control-btn {
+            background: #4a5568;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .control-btn:hover {
+            background: #2d3748;
+        }
+
+        .system-prompt-container {
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .system-prompt-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .dark-mode .system-prompt-textarea {
+            background: #4a5568;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .system-prompt-textarea::placeholder {
+            color: #a0aec0;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background: #e9ecef;
+        }
+
+        .dark-mode .preset-btn {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .preset-btn:hover {
+            background: #4a5568;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
         .chat-messages {
             flex: 1;
             padding: 20px;
@@ -150,6 +294,44 @@
             color: white;
         }
         
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 20px;
+            margin-left: 50px;
+            max-width: 70%;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .dark-mode .typing-indicator {
+            background: #4a5568;
+            border-color: #2d3748;
+        }
+        
+        .typing-dots {
+            display: flex;
+            align-items: center;
+        }
+        
+        .typing-dots span {
+            height: 8px;
+            width: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
         .chat-input {
             display: flex;
             padding: 20px;
@@ -213,44 +395,6 @@
             cursor: not-allowed;
         }
         
-        .typing-indicator {
-            display: none;
-            padding: 15px 20px;
-            background: white;
-            border: 1px solid #e1e5e9;
-            border-radius: 20px;
-            margin-left: 50px;
-            max-width: 70%;
-            transition: background 0.3s ease, border-color 0.3s ease;
-        }
-
-        .dark-mode .typing-indicator {
-            background: #4a5568;
-            border-color: #2d3748;
-        }
-        
-        .typing-dots {
-            display: flex;
-            align-items: center;
-        }
-        
-        .typing-dots span {
-            height: 8px;
-            width: 8px;
-            background: #667eea;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: typing 1.4s infinite ease-in-out;
-        }
-        
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -259,58 +403,6 @@
         @keyframes typing {
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-10px); }
-        }
-        
-        .config-panel {
-            padding: 10px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e1e5e9;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 14px;
-            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-
-        .dark-mode .config-panel {
-            background: #1a202c;
-            border-bottom-color: #4a5568;
-            color: #e2e8f0;
-        }
-
-        .config-panel input {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-
-        .dark-mode .config-panel input {
-            background: #4a5568;
-            border-color: #2d3748;
-            color: #e2e8f0;
-        }
-
-        .dark-mode .config-panel input::placeholder {
-            color: #a0aec0;
-        }
-        
-        .status {
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
         }
     </style>
 </head>
@@ -327,6 +419,23 @@
             <label>Model:</label>
             <input type="text" id="modelName" value="llama3.2:3b" placeholder="llama3.2:3b">
             <div class="status" id="status">Ready</div>
+            
+            <div class="control-buttons">
+                <button class="control-btn" id="clearHistoryBtn">🗑️ Clear</button>
+                <button class="control-btn" id="exportHistoryBtn">📥 Export</button>
+                <button class="control-btn" id="systemPromptBtn">⚙️ System</button>
+            </div>
+            
+            <div class="system-prompt-container hidden" id="systemPromptContainer">
+                <textarea class="system-prompt-textarea" id="systemPrompt" placeholder="Enter system prompt to customize AI behavior (e.g., 'You are a helpful coding assistant')"></textarea>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-preset="helpful">Helpful Assistant</button>
+                    <button class="preset-btn" data-preset="coding">Coding Expert</button>
+                    <button class="preset-btn" data-preset="creative">Creative Writer</button>
+                    <button class="preset-btn" data-preset="technical">Technical Analyst</button>
+                    <button class="preset-btn" data-preset="clear">Clear</button>
+                </div>
+            </div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -363,9 +472,24 @@
                 this.modelName = document.getElementById('modelName');
                 this.status = document.getElementById('status');
                 this.themeToggle = document.getElementById('themeToggle');
+                this.clearHistoryBtn = document.getElementById('clearHistoryBtn');
+                this.exportHistoryBtn = document.getElementById('exportHistoryBtn');
+                this.systemPromptBtn = document.getElementById('systemPromptBtn');
+                this.systemPromptContainer = document.getElementById('systemPromptContainer');
+                this.systemPrompt = document.getElementById('systemPrompt');
+                
+                this.chatHistory = [];
+                this.systemPrompts = {
+                    helpful: "You are a helpful, friendly, and knowledgeable assistant. Provide clear, accurate, and useful responses.",
+                    coding: "You are an expert software developer and coding assistant. Provide clean, efficient code examples with clear explanations. Focus on best practices and debugging help.",
+                    creative: "You are a creative writing assistant. Help with storytelling, creative ideas, and engaging content. Be imaginative and inspiring.",
+                    technical: "You are a technical analyst and system administrator. Provide detailed technical explanations, troubleshooting steps, and system optimization advice."
+                };
                 
                 this.initEventListeners();
                 this.initTheme();
+                this.loadChatHistory();
+                this.loadSystemPrompt();
                 this.testConnection();
             }
             
@@ -381,10 +505,21 @@
                 this.ollamaUrl.addEventListener('change', () => this.testConnection());
                 this.modelName.addEventListener('change', () => this.testConnection());
                 this.themeToggle.addEventListener('click', () => this.toggleTheme());
+                this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
+                this.exportHistoryBtn.addEventListener('click', () => this.exportHistory());
+                this.systemPromptBtn.addEventListener('click', () => this.toggleSystemPrompt());
+                this.systemPrompt.addEventListener('input', () => this.saveSystemPrompt());
+                
+                // Preset buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const preset = e.target.dataset.preset;
+                        this.setSystemPromptPreset(preset);
+                    });
+                });
             }
             
             initTheme() {
-                // Check for saved theme preference or default to light mode
                 const savedTheme = localStorage.getItem('chatbot-theme') || 'light';
                 this.setTheme(savedTheme);
             }
@@ -404,6 +539,82 @@
                     document.body.classList.remove('dark-mode');
                     this.themeToggle.innerHTML = '🌙 Dark';
                 }
+            }
+            
+            loadChatHistory() {
+                const savedHistory = JSON.parse(localStorage.getItem('chatbot-history') || '[]');
+                this.chatHistory = savedHistory;
+                
+                // Clear existing messages except welcome
+                const welcomeMsg = this.chatMessages.querySelector('.message.bot');
+                this.chatMessages.innerHTML = '';
+                if (savedHistory.length === 0) {
+                    this.chatMessages.appendChild(welcomeMsg);
+                } else {
+                    // Restore chat history
+                    savedHistory.forEach(msg => {
+                        this.addMessage(msg.content, msg.sender, false);
+                    });
+                }
+                this.scrollToBottom();
+            }
+            
+            saveChatHistory() {
+                localStorage.setItem('chatbot-history', JSON.stringify(this.chatHistory));
+            }
+            
+            clearHistory() {
+                if (confirm('Are you sure you want to clear the chat history?')) {
+                    this.chatHistory = [];
+                    this.saveChatHistory();
+                    this.chatMessages.innerHTML = '';
+                    // Add welcome message back
+                    this.addMessage("Hello! I'm your Ollama chatbot. How can I help you today?", 'bot', false);
+                }
+            }
+            
+            exportHistory() {
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const filename = `ollama-chat-${timestamp}.json`;
+                
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    model: this.modelName.value,
+                    systemPrompt: this.systemPrompt.value,
+                    messages: this.chatHistory
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            toggleSystemPrompt() {
+                this.systemPromptContainer.classList.toggle('hidden');
+            }
+            
+            loadSystemPrompt() {
+                const savedPrompt = localStorage.getItem('chatbot-system-prompt') || '';
+                this.systemPrompt.value = savedPrompt;
+            }
+            
+            saveSystemPrompt() {
+                localStorage.setItem('chatbot-system-prompt', this.systemPrompt.value);
+            }
+            
+            setSystemPromptPreset(preset) {
+                if (preset === 'clear') {
+                    this.systemPrompt.value = '';
+                } else {
+                    this.systemPrompt.value = this.systemPrompts[preset] || '';
+                }
+                this.saveSystemPrompt();
             }
             
             async testConnection() {
@@ -447,6 +658,13 @@
                 this.showTyping();
                 
                 try {
+                    // Prepare the prompt with system prompt if set
+                    let fullPrompt = message;
+                    const systemPromptText = this.systemPrompt.value.trim();
+                    if (systemPromptText) {
+                        fullPrompt = `${systemPromptText}\n\nUser: ${message}`;
+                    }
+                    
                     const response = await fetch(`${this.ollamaUrl.value}/api/generate`, {
                         method: 'POST',
                         headers: {
@@ -454,7 +672,7 @@
                         },
                         body: JSON.stringify({
                             model: this.modelName.value,
-                            prompt: message,
+                            prompt: fullPrompt,
                             stream: false
                         })
                     });
@@ -479,7 +697,7 @@
                 this.messageInput.focus();
             }
             
-            addMessage(content, sender) {
+            addMessage(content, sender, saveToHistory = true) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${sender}`;
                 
@@ -496,6 +714,16 @@
                 
                 this.chatMessages.appendChild(messageDiv);
                 this.scrollToBottom();
+                
+                // Save to history
+                if (saveToHistory) {
+                    this.chatHistory.push({
+                        content: content,
+                        sender: sender,
+                        timestamp: new Date().toISOString()
+                    });
+                    this.saveChatHistory();
+                }
             }
             
             showTyping() {
