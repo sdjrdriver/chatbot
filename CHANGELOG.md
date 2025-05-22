@@ -1,0 +1,18 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [1.0.0] - 2025-05-22
+
+### Added
+- Initial chatbot interface
+- Real-time communication with Ollama API
+- Connection status monitoring
+- Configurable Ollama URL and model settings
+- Typing indicator with animated dots
+- Responsive design with gradient backgrounds
+- Message animations and smooth transitions
+- User and bot message differentiation with avatars
+- Auto-scroll to bottom functionality
+- Error handling for connection issues
+- Enter key support for sending messages
